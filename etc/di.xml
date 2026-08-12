@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magebit\Mcp\Model\Tool\ToolRegistry">
+        <arguments>
+            <argument name="tools" xsi:type="array">
+                <item name="tax.class.list" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassList</item>
+                <item name="tax.class.get" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassGet</item>
+                <item name="tax.rate.list" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rate\RateList</item>
+                <item name="tax.rate.get" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rate\RateGet</item>
+                <item name="tax.rule.list" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rule\RuleList</item>
+                <item name="tax.rule.get" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rule\RuleGet</item>
+                <item name="tax.rate.create" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rate\RateCreate</item>
+                <item name="tax.rate.update" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rate\RateUpdate</item>
+                <item name="tax.rate.delete" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rate\RateDelete</item>
+                <item name="tax.rule.create" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rule\RuleCreate</item>
+                <item name="tax.rule.update" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rule\RuleUpdate</item>
+                <item name="tax.rule.delete" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\Rule\RuleDelete</item>
+                <item name="tax.class.create" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassCreate</item>
+                <item name="tax.class.update" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassUpdate</item>
+                <item name="tax.class.delete" xsi:type="object">Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassDelete</item>
+                <item name="directory.currency.info" xsi:type="object">Magebit\McpTaxTools\Tool\Directory\Currency\CurrencyInfo</item>
+                <item name="directory.currency.rate.set" xsi:type="object">Magebit\McpTaxTools\Tool\Directory\Currency\RateSet</item>
+                <item name="directory.currency.rate.import" xsi:type="object">Magebit\McpTaxTools\Tool\Directory\Currency\RateImport</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\TaxClass\IdentityResolver</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magebit\McpTaxTools\Tool\Tax\TaxClass\TaxClassGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\TaxClass\IdentityResolver</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magebit\McpTaxTools\Tool\Tax\Rate\RateList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\IdentityResolver</item>
+                <item name="location" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\LocationResolver</item>
+                <item name="linked_rules" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\LinkedRulesResolver</item>
+                <item name="titles" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\TitlesResolver</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magebit\McpTaxTools\Tool\Tax\Rate\RateGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\IdentityResolver</item>
+                <item name="location" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\LocationResolver</item>
+                <item name="linked_rules" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\LinkedRulesResolver</item>
+                <item name="titles" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rate\TitlesResolver</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magebit\McpTaxTools\Tool\Tax\Rule\RuleList">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rule\IdentityResolver</item>
+                <item name="rates" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rule\RatesResolver</item>
+                <item name="classes" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rule\ClassesResolver</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magebit\McpTaxTools\Tool\Tax\Rule\RuleGet">
+        <arguments>
+            <argument name="fieldResolvers" xsi:type="array">
+                <item name="identity" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rule\IdentityResolver</item>
+                <item name="rates" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rule\RatesResolver</item>
+                <item name="classes" xsi:type="object">Magebit\McpTaxTools\Model\FieldResolver\Rule\ClassesResolver</item>
+            </argument>
+        </arguments>
+    </type>
+</config>
