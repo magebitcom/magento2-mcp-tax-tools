@@ -137,6 +137,28 @@ rather than silently persisted alongside good rates. A fetch that yields
 no usable rate at all is reported the same way (`partial: true`,
 `saved: false`) rather than raised as an error.
 
+An unknown `service` is rejected up front, listing the services that are
+actually available, because the underlying factory raises an exception the
+dispatcher can only report as a generic failure.
+
+## Currency codes are checked before they are written
+
+`directory.currency.rate.set` rejects any code Magento does not recognise.
+The three-letter schema pattern alone would let a typo through, and the
+underlying `saveRates()` writes it to `directory_currency_rate` without
+complaint. Codes are matched against every currency Magento knows rather
+than the store's allowed list, so a rate can still be staged before its
+currency is enabled.
+
+## Create-time defaults
+
+The optional arguments on the create tools are genuinely optional:
+
+- `tax.rule.create` defaults `priority` and `position` to `0`. Magento
+  reads an unset priority back as `""` and rejects it.
+- `tax.rate.create` defaults `tax_postcode` to `*`, except when
+  `zip_is_range` is true — a range builds its own postcode on save.
+
 ## Extending
 
 See `docs/EXTENDING.md` for:

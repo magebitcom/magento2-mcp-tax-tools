@@ -15,6 +15,7 @@ use Magebit\Mcp\Model\Tool\Schema\Builder\IntegerBuilder;
 use Magebit\Mcp\Model\Tool\Schema\Schema;
 use Magebit\Mcp\Model\Tool\ToolResult;
 use Magebit\Mcp\Model\Tool\WriteMode;
+use Magebit\McpTaxTools\Model\RuleLinkIds;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Tax\Api\TaxRuleRepositoryInterface;
 
@@ -25,9 +26,11 @@ class RuleDelete implements ToolInterface, UnderlyingAclAwareInterface
 
     /**
      * @param TaxRuleRepositoryInterface $ruleRepository
+     * @param RuleLinkIds $linkIds
      */
     public function __construct(
-        private readonly TaxRuleRepositoryInterface $ruleRepository
+        private readonly TaxRuleRepositoryInterface $ruleRepository,
+        private readonly RuleLinkIds $linkIds
     ) {
     }
 
@@ -116,9 +119,9 @@ class RuleDelete implements ToolInterface, UnderlyingAclAwareInterface
         $removed = [
             'id' => $ruleId,
             'code' => (string) $rule->getCode(),
-            'tax_rate_ids' => $rule->getTaxRateIds(),
-            'customer_tax_class_ids' => $rule->getCustomerTaxClassIds(),
-            'product_tax_class_ids' => $rule->getProductTaxClassIds(),
+            'tax_rate_ids' => $this->linkIds->toIntegers($rule->getTaxRateIds()),
+            'customer_tax_class_ids' => $this->linkIds->toIntegers($rule->getCustomerTaxClassIds()),
+            'product_tax_class_ids' => $this->linkIds->toIntegers($rule->getProductTaxClassIds()),
         ];
 
         $this->ruleRepository->deleteById($ruleId);

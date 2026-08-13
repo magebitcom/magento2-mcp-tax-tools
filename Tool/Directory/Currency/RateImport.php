@@ -129,12 +129,25 @@ class RateImport implements ToolInterface, UnderlyingAclAwareInterface
             ? $serviceArg
             : (is_string($configuredService) ? $configuredService : '');
 
+        $available = $this->importConfig->getAvailableServices();
+
         if ($service === '') {
             throw new LocalizedException(
                 __(
                     'No currency import service is configured (currency/import/service). '
                     . 'Available services: %1.',
-                    implode(', ', $this->importConfig->getAvailableServices())
+                    implode(', ', $available)
+                )
+            );
+        }
+
+        // The factory throws a bare InvalidArgumentException the dispatcher cannot surface.
+        if (!in_array($service, $available, true)) {
+            throw new LocalizedException(
+                __(
+                    'Unknown currency import service "%1". Available services: %2.',
+                    $service,
+                    implode(', ', $available)
                 )
             );
         }

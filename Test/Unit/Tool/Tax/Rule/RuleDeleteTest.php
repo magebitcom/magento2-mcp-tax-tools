@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Magebit\McpTaxTools\Test\Unit\Tool\Tax\Rule;
 
 use Magebit\Mcp\Model\Tool\WriteMode;
+use Magebit\McpTaxTools\Model\RuleLinkIds;
 use Magebit\McpTaxTools\Tool\Tax\Rule\RuleDelete;
 use Magento\Tax\Api\Data\TaxRuleInterface;
 use Magento\Tax\Api\TaxRuleRepositoryInterface;
@@ -25,7 +26,7 @@ class RuleDeleteTest extends TestCase
     protected function setUp(): void
     {
         $this->ruleRepository = $this->createMock(TaxRuleRepositoryInterface::class);
-        $this->tool = new RuleDelete($this->ruleRepository);
+        $this->tool = new RuleDelete($this->ruleRepository, new RuleLinkIds());
     }
 
     public function testDeleteIsWriteGatedAndRequiresConfirmation(): void
@@ -82,5 +83,23 @@ class RuleDeleteTest extends TestCase
             'customer_tax_class_ids' => [3],
             'product_tax_class_ids' => [2],
         ], $result->getAuditSummary());
+    }
+
+    public function testLinkedIdsAreReturnedAsIntegers(): void
+    {
+        $rule = $this->createMock(TaxRuleInterface::class);
+        $rule->method('getId')->willReturn(7);
+        $rule->method('getCode')->willReturn('Rule1');
+        $rule->method('getTaxRateIds')->willReturn(['4', '5']);
+        $rule->method('getCustomerTaxClassIds')->willReturn(['3']);
+        $rule->method('getProductTaxClassIds')->willReturn(['2']);
+
+        $this->ruleRepository->method('get')->with(7)->willReturn($rule);
+
+        $result = $this->tool->execute(['rule_id' => 7]);
+
+        $this->assertSame([4, 5], $result->getAuditSummary()['tax_rate_ids']);
+        $this->assertSame([3], $result->getAuditSummary()['customer_tax_class_ids']);
+        $this->assertSame([2], $result->getAuditSummary()['product_tax_class_ids']);
     }
 }

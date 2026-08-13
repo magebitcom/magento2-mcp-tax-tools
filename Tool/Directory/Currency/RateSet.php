@@ -17,6 +17,7 @@ use Magebit\Mcp\Model\Tool\ToolResult;
 use Magebit\Mcp\Model\Tool\WriteMode;
 use Magebit\McpTaxTools\Model\CurrencyRateWriter;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Locale\ListsInterface;
 
 class RateSet implements ToolInterface, UnderlyingAclAwareInterface
 {
@@ -27,9 +28,11 @@ class RateSet implements ToolInterface, UnderlyingAclAwareInterface
 
     /**
      * @param CurrencyRateWriter $rateWriter
+     * @param ListsInterface $localeLists
      */
     public function __construct(
-        private readonly CurrencyRateWriter $rateWriter
+        private readonly CurrencyRateWriter $rateWriter,
+        private readonly ListsInterface $localeLists
     ) {
     }
 
@@ -125,6 +128,7 @@ class RateSet implements ToolInterface, UnderlyingAclAwareInterface
             throw new LocalizedException(__('Parameter "currency_from" is required and must be a string.'));
         }
         $from = strtoupper($rawFrom);
+        $this->assertKnownCurrency($from);
 
         $rawRates = $arguments['rates'] ?? null;
         if (!is_array($rawRates) || $rawRates === []) {
@@ -132,6 +136,9 @@ class RateSet implements ToolInterface, UnderlyingAclAwareInterface
         }
 
         $rates = $this->normalize($rawRates);
+        foreach (array_keys($rates) as $code) {
+            $this->assertKnownCurrency($code);
+        }
         $before = $this->rateWriter->getRates($from, array_keys($rates));
 
         $this->rateWriter->save([$from => $rates]);
@@ -155,6 +162,24 @@ class RateSet implements ToolInterface, UnderlyingAclAwareInterface
                 'before' => $before,
             ]
         );
+    }
+
+    /**
+     * The three-letter pattern alone lets junk like "XQZ" through, and saveRates() would
+     * persist it. Checked against every code Magento knows, not just the allowed ones, so
+     * a rate can still be staged before its currency is enabled.
+     *
+     * @param string $code
+     * @return void
+     * @throws LocalizedException
+     */
+    private function assertKnownCurrency(string $code): void
+    {
+        $known = array_column($this->localeLists->getOptionAllCurrencies(), 'value');
+
+        if (!in_array($code, $known, true)) {
+            throw new LocalizedException(__('"%1" is not a known currency code.', $code));
+        }
     }
 
     /**

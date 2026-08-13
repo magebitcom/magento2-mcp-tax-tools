@@ -15,6 +15,7 @@ use Magento\Directory\Model\Currency\Import\Config;
 use Magento\Directory\Model\Currency\Import\Factory;
 use Magento\Directory\Model\Currency\Import\ImportInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\LocalizedException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -50,10 +51,22 @@ class RateImportTest extends TestCase
 
         return new RateImport(
             $factory,
-            $this->createMock(Config::class),
+            $this->importConfig(),
             $scopeConfig,
             $rateWriter
         );
+    }
+
+    /**
+     * @return Config&MockObject
+     */
+    private function importConfig(): Config
+    {
+        $config = $this->createMock(Config::class);
+        $config->method('getAvailableServices')
+            ->willReturn(['fixerio', 'fixerio_apilayer', 'currencyconverterapi']);
+
+        return $config;
     }
 
     /**
@@ -185,6 +198,46 @@ class RateImportTest extends TestCase
 
         $this->assertTrue($decoded['partial']);
         $this->assertFalse($decoded['saved']);
+    }
+
+    /**
+     * The factory throws a bare InvalidArgumentException, which the dispatcher
+     * flattens to "Tool execution failed." — so the check has to happen here.
+     *
+     * @return void
+     */
+    public function testUnknownServiceIsRejectedBeforeTheFactoryIsCalled(): void
+    {
+        $factory = $this->createMock(Factory::class);
+        $factory->expects($this->never())->method('create');
+
+        $tool = new RateImport(
+            $factory,
+            $this->importConfig(),
+            $this->createMock(ScopeConfigInterface::class),
+            $this->createMock(CurrencyRateWriter::class)
+        );
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('fixerio, fixerio_apilayer, currencyconverterapi');
+        $tool->execute(['service' => 'not_a_service']);
+    }
+
+    public function testNoConfiguredServiceIsRejectedWithTheAvailableServices(): void
+    {
+        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfig->method('getValue')->willReturn('');
+
+        $tool = new RateImport(
+            $this->createMock(Factory::class),
+            $this->importConfig(),
+            $scopeConfig,
+            $this->createMock(CurrencyRateWriter::class)
+        );
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('fixerio, fixerio_apilayer, currencyconverterapi');
+        $tool->execute([]);
     }
 
     public function testZeroRateWithNoWarningsIsPartialAndNotSaved(): void

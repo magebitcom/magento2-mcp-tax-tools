@@ -87,7 +87,8 @@ class RateCreate implements ToolInterface, UnderlyingAclAwareInterface
                 ->minimum(0)
                 ->description('Region id; 0 or omitted means all regions.'))
             ->string('tax_postcode', fn (StringBuilder $s) => $s
-                ->description('Postcode pattern; `*` means all postcodes.'))
+                ->description('Postcode pattern; `*` means all postcodes. Defaults to `*` unless '
+                    . '`zip_is_range` is true, which builds the postcode from the range.'))
             ->boolean('zip_is_range', fn (BooleanBuilder $b) => $b
                 ->description('Treat the postcode scope as a numeric range.'))
             ->integer('zip_from', fn (IntegerBuilder $i) => $i
@@ -134,6 +135,10 @@ class RateCreate implements ToolInterface, UnderlyingAclAwareInterface
      */
     public function execute(array $arguments): ToolResultInterface
     {
+        if (!array_key_exists('tax_postcode', $arguments) && empty($arguments['zip_is_range'])) {
+            $arguments['tax_postcode'] = '*';
+        }
+
         $rate = $this->applier->apply($this->rateFactory->create(), $arguments);
         $saved = $this->rateRepository->save($rate);
 

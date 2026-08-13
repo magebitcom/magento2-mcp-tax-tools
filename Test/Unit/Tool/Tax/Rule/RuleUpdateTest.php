@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Magebit\McpTaxTools\Test\Unit\Tool\Tax\Rule;
 
 use Magebit\Mcp\Model\Tool\WriteMode;
+use Magebit\McpTaxTools\Model\RuleLinkIds;
 use Magebit\McpTaxTools\Tool\Tax\Rule\RuleFieldApplier;
 use Magebit\McpTaxTools\Tool\Tax\Rule\RuleUpdate;
 use Magento\Tax\Api\Data\TaxRuleInterface;
@@ -26,7 +27,7 @@ class RuleUpdateTest extends TestCase
     protected function setUp(): void
     {
         $this->ruleRepository = $this->createMock(TaxRuleRepositoryInterface::class);
-        $this->tool = new RuleUpdate($this->ruleRepository, new RuleFieldApplier());
+        $this->tool = new RuleUpdate($this->ruleRepository, new RuleFieldApplier(), new RuleLinkIds());
     }
 
     public function testUpdateIsWriteGatedAndDoesNotRequireConfirmation(): void
@@ -68,5 +69,33 @@ class RuleUpdateTest extends TestCase
             'customer_tax_class_ids' => [3],
             'product_tax_class_ids' => [2],
         ], $result->getAuditSummary()['before']);
+    }
+
+    /**
+     * Magento hands these back as strings after a save, where create returns ints —
+     * the tool normalizes so both report the same shape.
+     *
+     * @return void
+     */
+    public function testLinkedIdsAreReturnedAsIntegers(): void
+    {
+        $rule = $this->createMock(TaxRuleInterface::class);
+        $rule->method('getId')->willReturn(7);
+        $rule->method('getCode')->willReturn('Rule1');
+        $rule->method('getTaxRateIds')->willReturn(['4', '5']);
+        $rule->method('getCustomerTaxClassIds')->willReturn(['3']);
+        $rule->method('getProductTaxClassIds')->willReturn(['2']);
+
+        $this->ruleRepository->method('get')->with(7)->willReturn($rule);
+        $this->ruleRepository->method('save')->willReturnArgument(0);
+
+        $text = $this->tool->execute(['rule_id' => 7, 'priority' => 1])->getContent()[0]['text'];
+        $this->assertIsString($text);
+        $decoded = json_decode($text, true);
+        $this->assertIsArray($decoded);
+
+        $this->assertSame([4, 5], $decoded['tax_rate_ids']);
+        $this->assertSame([3], $decoded['customer_tax_class_ids']);
+        $this->assertSame([2], $decoded['product_tax_class_ids']);
     }
 }

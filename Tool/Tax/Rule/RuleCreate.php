@@ -18,6 +18,7 @@ use Magebit\Mcp\Model\Tool\Schema\Builder\StringBuilder;
 use Magebit\Mcp\Model\Tool\Schema\Schema;
 use Magebit\Mcp\Model\Tool\ToolResult;
 use Magebit\Mcp\Model\Tool\WriteMode;
+use Magebit\McpTaxTools\Model\RuleLinkIds;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Tax\Api\Data\TaxRuleInterfaceFactory;
 use Magento\Tax\Api\TaxRuleRepositoryInterface;
@@ -31,11 +32,13 @@ class RuleCreate implements ToolInterface, UnderlyingAclAwareInterface
      * @param TaxRuleRepositoryInterface $ruleRepository
      * @param TaxRuleInterfaceFactory $ruleFactory
      * @param RuleFieldApplier $applier
+     * @param RuleLinkIds $linkIds
      */
     public function __construct(
         private readonly TaxRuleRepositoryInterface $ruleRepository,
         private readonly TaxRuleInterfaceFactory $ruleFactory,
-        private readonly RuleFieldApplier $applier
+        private readonly RuleFieldApplier $applier,
+        private readonly RuleLinkIds $linkIds
     ) {
     }
 
@@ -85,10 +88,11 @@ class RuleCreate implements ToolInterface, UnderlyingAclAwareInterface
                 ->required())
             ->integer('priority', fn (IntegerBuilder $i) => $i
                 ->minimum(0)
-                ->description('Rules with the same priority are summed; higher priorities compound.'))
+                ->description('Rules with the same priority are summed; higher priorities compound. '
+                    . 'Defaults to 0.'))
             ->integer('position', fn (IntegerBuilder $i) => $i
                 ->minimum(0)
-                ->description('Sort position in the admin grid.'))
+                ->description('Sort position in the admin grid. Defaults to 0.'))
             ->boolean('calculate_subtotal', fn (BooleanBuilder $b) => $b
                 ->description('Calculate off the subtotal rather than per line.'))
             ->toArray();
@@ -131,15 +135,18 @@ class RuleCreate implements ToolInterface, UnderlyingAclAwareInterface
      */
     public function execute(array $arguments): ToolResultInterface
     {
+        $arguments['priority'] ??= 0;
+        $arguments['position'] ??= 0;
+
         $rule = $this->applier->apply($this->ruleFactory->create(), $arguments);
         $saved = $this->ruleRepository->save($rule);
 
         $payload = [
             'id' => $saved->getId() !== null ? (int) $saved->getId() : null,
             'code' => (string) $saved->getCode(),
-            'tax_rate_ids' => $saved->getTaxRateIds(),
-            'customer_tax_class_ids' => $saved->getCustomerTaxClassIds(),
-            'product_tax_class_ids' => $saved->getProductTaxClassIds(),
+            'tax_rate_ids' => $this->linkIds->toIntegers($saved->getTaxRateIds()),
+            'customer_tax_class_ids' => $this->linkIds->toIntegers($saved->getCustomerTaxClassIds()),
+            'product_tax_class_ids' => $this->linkIds->toIntegers($saved->getProductTaxClassIds()),
         ];
 
         $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);

@@ -18,6 +18,7 @@ use Magebit\Mcp\Model\Tool\Schema\Builder\StringBuilder;
 use Magebit\Mcp\Model\Tool\Schema\Schema;
 use Magebit\Mcp\Model\Tool\ToolResult;
 use Magebit\Mcp\Model\Tool\WriteMode;
+use Magebit\McpTaxTools\Model\RuleLinkIds;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Tax\Api\TaxRuleRepositoryInterface;
 
@@ -29,10 +30,12 @@ class RuleUpdate implements ToolInterface, UnderlyingAclAwareInterface
     /**
      * @param TaxRuleRepositoryInterface $ruleRepository
      * @param RuleFieldApplier $applier
+     * @param RuleLinkIds $linkIds
      */
     public function __construct(
         private readonly TaxRuleRepositoryInterface $ruleRepository,
-        private readonly RuleFieldApplier $applier
+        private readonly RuleFieldApplier $applier,
+        private readonly RuleLinkIds $linkIds
     ) {
     }
 
@@ -139,9 +142,9 @@ class RuleUpdate implements ToolInterface, UnderlyingAclAwareInterface
         $rule = $this->ruleRepository->get($ruleId);
         $before = [
             'code' => (string) $rule->getCode(),
-            'tax_rate_ids' => $rule->getTaxRateIds(),
-            'customer_tax_class_ids' => $rule->getCustomerTaxClassIds(),
-            'product_tax_class_ids' => $rule->getProductTaxClassIds(),
+            'tax_rate_ids' => $this->linkIds->toIntegers($rule->getTaxRateIds()),
+            'customer_tax_class_ids' => $this->linkIds->toIntegers($rule->getCustomerTaxClassIds()),
+            'product_tax_class_ids' => $this->linkIds->toIntegers($rule->getProductTaxClassIds()),
         ];
 
         $saved = $this->ruleRepository->save($this->applier->apply($rule, $arguments));
@@ -149,9 +152,9 @@ class RuleUpdate implements ToolInterface, UnderlyingAclAwareInterface
         $payload = [
             'id' => $saved->getId() !== null ? (int) $saved->getId() : null,
             'code' => (string) $saved->getCode(),
-            'tax_rate_ids' => $saved->getTaxRateIds(),
-            'customer_tax_class_ids' => $saved->getCustomerTaxClassIds(),
-            'product_tax_class_ids' => $saved->getProductTaxClassIds(),
+            'tax_rate_ids' => $this->linkIds->toIntegers($saved->getTaxRateIds()),
+            'customer_tax_class_ids' => $this->linkIds->toIntegers($saved->getCustomerTaxClassIds()),
+            'product_tax_class_ids' => $this->linkIds->toIntegers($saved->getProductTaxClassIds()),
         ];
 
         $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);

@@ -12,6 +12,7 @@ use Magebit\Mcp\Model\Tool\WriteMode;
 use Magebit\McpTaxTools\Model\CurrencyRateWriter;
 use Magebit\McpTaxTools\Tool\Directory\Currency\RateSet;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Locale\ListsInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -25,7 +26,22 @@ class RateSetTest extends TestCase
     protected function setUp(): void
     {
         $this->rateWriter = $this->createMock(CurrencyRateWriter::class);
-        $this->tool = new RateSet($this->rateWriter);
+        $this->tool = new RateSet($this->rateWriter, $this->currencyLists());
+    }
+
+    /**
+     * @return ListsInterface&MockObject
+     */
+    private function currencyLists(): ListsInterface
+    {
+        $lists = $this->createMock(ListsInterface::class);
+        $lists->method('getOptionAllCurrencies')->willReturn([
+            ['value' => 'USD', 'label' => 'US Dollar'],
+            ['value' => 'EUR', 'label' => 'Euro'],
+            ['value' => 'GBP', 'label' => 'British Pound'],
+        ]);
+
+        return $lists;
     }
 
     public function testSetIsWriteGatedAndRequiresConfirmation(): void
@@ -150,5 +166,38 @@ class RateSetTest extends TestCase
 
         $this->expectException(LocalizedException::class);
         $this->tool->execute(['currency_from' => 'USD', 'rates' => []]);
+    }
+
+    /**
+     * The three-letter pattern alone lets junk through, and `saveRates()` writes it
+     * to `directory_currency_rate` without complaint.
+     *
+     * @return void
+     */
+    public function testUnknownTargetCurrencyCodeIsRejected(): void
+    {
+        $this->rateWriter->expects($this->never())->method('save');
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('XQZ');
+        $this->tool->execute(['currency_from' => 'USD', 'rates' => ['XQZ' => 2.5]]);
+    }
+
+    public function testUnknownSourceCurrencyCodeIsRejected(): void
+    {
+        $this->rateWriter->expects($this->never())->method('save');
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('XQZ');
+        $this->tool->execute(['currency_from' => 'XQZ', 'rates' => ['EUR' => 0.91]]);
+    }
+
+    public function testAKnownCurrencyStillSaves(): void
+    {
+        $this->rateWriter->expects($this->once())
+            ->method('save')
+            ->with(['USD' => ['GBP' => 0.79]]);
+
+        $this->tool->execute(['currency_from' => 'USD', 'rates' => ['GBP' => 0.79]]);
     }
 }

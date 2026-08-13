@@ -53,7 +53,8 @@ class RateDelete implements ToolInterface, UnderlyingAclAwareInterface
     public function getDescription(): string
     {
         return 'Permanently delete a tax rate by id. This changes what customers are charged as soon as '
-            . 'it completes, and cannot be undone. Any rule referencing this rate loses it.';
+            . 'it completes, and cannot be undone. Rules referencing this rate alongside others simply '
+            . 'drop it; Magento refuses the delete when the rate is a rule\'s only rate.';
     }
 
     /**

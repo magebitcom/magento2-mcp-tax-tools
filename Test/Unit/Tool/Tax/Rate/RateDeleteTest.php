@@ -46,6 +46,20 @@ class RateDeleteTest extends TestCase
         $this->assertStringContainsString('charged', strtolower($this->tool->getDescription()));
     }
 
+    /**
+     * Magento refuses the delete when the rate is a rule's only rate, so the
+     * description must not promise the rule simply loses it.
+     *
+     * @return void
+     */
+    public function testDescriptionStatesTheDeleteIsRefusedWhenItWouldEmptyARule(): void
+    {
+        $description = $this->tool->getDescription();
+
+        $this->assertStringContainsString('refuses', strtolower($description));
+        $this->assertStringNotContainsString('loses it', $description);
+    }
+
     public function testExecuteCapturesRateSnapshotBeforeDeleting(): void
     {
         $rate = $this->createMock(TaxRateInterface::class);
