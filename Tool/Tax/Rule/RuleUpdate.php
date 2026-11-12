@@ -79,9 +79,9 @@ class RuleUpdate implements ToolInterface, UnderlyingAclAwareInterface
             ->array('tax_rate_ids', fn (ArrayBuilder $a) => $a->ofIntegers()
                 ->description('Ids of the tax rates this rule applies.'))
             ->array('customer_tax_class_ids', fn (ArrayBuilder $a) => $a->ofIntegers()
-                ->description('Customer tax class ids — see tax.class.list.'))
+                ->description('Customer tax class ids — see tax_class_list.'))
             ->array('product_tax_class_ids', fn (ArrayBuilder $a) => $a->ofIntegers()
-                ->description('Product tax class ids — see tax.class.list.'))
+                ->description('Product tax class ids — see tax_class_list.'))
             ->integer('priority', fn (IntegerBuilder $i) => $i
                 ->minimum(0)
                 ->description('Rules with the same priority are summed; higher priorities compound.'))
