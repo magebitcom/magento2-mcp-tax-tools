@@ -28,6 +28,11 @@ class RuleCreate implements ToolInterface, UnderlyingAclAwareInterface
     public const ACL_RESOURCE = 'Magebit_McpTaxTools::tool_tax_rule_create';
 
     /**
+     * Magento's rule validator rejects an empty priority; the admin form defaults both to 0.
+     */
+    private const DEFAULTS = ['priority' => 0, 'position' => 0];
+
+    /**
      * @param TaxRuleRepositoryInterface $ruleRepository
      * @param TaxRuleInterfaceFactory $ruleFactory
      * @param RuleFieldApplier $applier
@@ -78,17 +83,18 @@ class RuleCreate implements ToolInterface, UnderlyingAclAwareInterface
                 ->description('Ids of the tax rates this rule applies.')
                 ->required())
             ->array('customer_tax_class_ids', fn (ArrayBuilder $a) => $a->ofIntegers()
-                ->description('Customer tax class ids — see tax.class.list.')
+                ->description('Customer tax class ids — see tax_class_list.')
                 ->required())
             ->array('product_tax_class_ids', fn (ArrayBuilder $a) => $a->ofIntegers()
-                ->description('Product tax class ids — see tax.class.list.')
+                ->description('Product tax class ids — see tax_class_list.')
                 ->required())
             ->integer('priority', fn (IntegerBuilder $i) => $i
                 ->minimum(0)
-                ->description('Rules with the same priority are summed; higher priorities compound.'))
+                ->description('Rules with the same priority are summed; higher priorities compound. '
+                    . 'Defaults to 0.'))
             ->integer('position', fn (IntegerBuilder $i) => $i
                 ->minimum(0)
-                ->description('Sort position in the admin grid.'))
+                ->description('Sort position in the admin grid. Defaults to 0.'))
             ->boolean('calculate_subtotal', fn (BooleanBuilder $b) => $b
                 ->description('Calculate off the subtotal rather than per line.'))
             ->toArray();
@@ -131,6 +137,7 @@ class RuleCreate implements ToolInterface, UnderlyingAclAwareInterface
      */
     public function execute(array $arguments): ToolResultInterface
     {
+        $arguments += self::DEFAULTS;
         $rule = $this->applier->apply($this->ruleFactory->create(), $arguments);
         $saved = $this->ruleRepository->save($rule);
 

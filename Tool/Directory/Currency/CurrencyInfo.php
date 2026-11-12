@@ -54,7 +54,7 @@ class CurrencyInfo implements ToolInterface, UnderlyingAclAwareInterface
         return 'Read the base currency, default display currency, allowed '
             . 'currencies and current exchange rates. Magento stores no '
             . 'timestamp for exchange rates, so this cannot report when they '
-            . 'were last refreshed — call system.cron.status with '
+            . 'were last refreshed — call system_cron_status with '
             . 'job_code=currency_rates_update to check whether the scheduled '
             . 'import is running.';
     }
